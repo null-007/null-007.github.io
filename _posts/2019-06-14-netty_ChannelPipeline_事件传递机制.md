@@ -1,3 +1,18 @@
+### 0、目录
+	
+	1、目标读者
+	2、前言
+	3、```ChannelPipeline```
+	4、事件传递模仿：```EventDelivery```
+	5、```EventDelivery``` 测试
+	
+### 1、目标读者
+简单使用过```netty```即可。
+### 2、前言
+本文主要介绍```netty```中关于```ChannelPipeline```的事件传递机制。首先我们会通过源码分析```ChannelPipeline```中的事件传递机制（netty 3.7）；然后我们有根据分析提炼出来的规则，模仿实现了该事件传递机制，我们称其为```EventDelivery```框架。该框架只关注
+事件传递机制，剔除了netty中其他业务相关的内容，所以通过阅读该部分代码，能够更快更清楚地了解该事件传递机制。
+[EventDelivery的github地址](https://github.com/null-007/netty-learning/tree/master/netty-3.7/src/test/java/org/jboss/netty/null007/EventDelivery)
+### 3、```ChannelPipeline``` 事件传递源码分析
 ```ChannelPipeline```的整个设计思路是如下图所示。通过```ChannelPipeline```将```Channel```和一组 ```ChannelHandler``` 联系在一起：
 
 ```
@@ -62,6 +77,7 @@
             new HashMap<String, DefaultChannelHandlerContext>(4);
         ...
     }
+	
 可以看出```netty```通过```ChannelPipeline```将```Channel```和一组 ```ChannelHandler``` 联系在一起。
 
 在深入看一下 ```DefaultChannelHandlerContext```。它的继承关系如下：
@@ -69,6 +85,7 @@
         ChannelHandlerContext       
                  |
     DefaultChannelHandlerContext
+	
 其成员变量如下：
 
     private final class DefaultChannelHandlerContext implements ChannelHandlerContext {
@@ -96,10 +113,12 @@
             canHandleDownstream = handler instanceof ChannelDownstreamHandler;
             ...
         }
+		
 除此外，该类只有下面两个方法有分析的必要了：
     
     public void sendDownstream(ChannelEvent e); // 下行事件传递中，向下一个handler传递事件
     public void sendUpstream(ChannelEvent e);   // 上行事件传递中，向下一个handler传递事件
+	
 这两个方法的具体分析会在下文中结合 ```DefaultChannelPipeline```的相关方法一起分析：
 
 小结一下，```netty```通过```ChannelPipeline```将```Channel```和一组 ```ChannelHandler``` 联系在一起；而一组 ```ChannelHandler```以链表的形式存在。 
@@ -117,6 +136,7 @@
     (4) DefaultChannelPipeline#sendDownstream(ChannelEvent);
     (5) DefaultChannelPipeline#sendDownstream(DefaultChannelHandlerContext, ChannelEvent);
     (6) DefaultChannelHandlerContext#sendDownstream(ChannelEvent)
+	
 先来看上行事件传递过程。该过程的起始点是方法(1):
     
     public void sendUpstream(ChannelEvent e) {
@@ -135,6 +155,7 @@
             canHandleDownstream = handler instanceof ChannelDownstreamHandler;
             ...
         }
+		
 所以需要找到上行链真正的```head```。
 ```sendUpstream(head, e)```方法即方法(2)，表示的是以当前节点为起始节点传递事件：
 
@@ -203,6 +224,7 @@
             ctx.sendUpstream(e);
         }
     }
+	
 有一点特别重要，根据该方法的条件分支形式可以发现，事件是否传递给下一个```handler```完全由处理事件的方法决定。只有当所有事件类型都不满足时才会自动传递给下一个```handler```。可以看一下```messageReceived()```方法:
 
     public void messageReceived(
@@ -212,6 +234,7 @@
         // 传递给下一handler
         ctx.sendUpstream(e);
     }
+	
 到了这一步了，我们来看看到底是如何传递给下一个```handler```的。记住，上文的```ctx```可是```ChannelPipeline```中的一个节点哦。```ctx.sendUpstream(e)```就是上文的方法(3):
 
     public void sendUpstream(ChannelEvent e) {
@@ -222,6 +245,7 @@
                 DefaultChannelPipeline.this.sendUpstream(next, e);
             }
         }
+		
 总结一下上行中整个事件传递的调用关系：
 
     (1) DefaultChannelPipeline#sendUpstream(ChannelEvent); // 事件刚刚产生时会调用，之后不会再调用
@@ -239,10 +263,44 @@
                 |                     |
                 |---------(5)<--------|
                 
-### 事件传递模仿
-为了加深映像，我们将上述框架中的关于事件传递的核心提取出来，自己模仿实现了该事件传递框架，完整的代码在
 
-目的展示：
+### 4、事件传递模仿：```EventDelivery```
+为了加深映像，我们将上述框架中的关于事件传递的核心提取出来，自己模仿实现了该事件传递框架```EventDelivery```，完整的代码在
+[EventDelivery的github地址](https://github.com/null-007/netty-learning/tree/master/netty-3.7/src/test/java/org/jboss/netty/null007/EventDelivery)
+代码目录如下：
+![](https://null-007.github.io/img/2019_06_14/EventDelivery目录.png)
+
+### 5、```EventDelivery```测试
+	
+```
+	public class PipelineTest {
+
+		public static void main(String[] args) {
+			// 创建 ChannelHandler
+			ChannelHandler upHandlerFirst = new UpstreamChannelHandlerFirst();
+			ChannelHandler upHandlerSecond = new UpstreamChannelHandlerSecond();
+			ChannelHandler downHandlerFirst = new DownStreamChannelHandlerFirst();
+
+			// 创建 ChannelPipeline
+			ChannelPipeline channelPipeline = new ChannelPipeline(new Channel());
+			channelPipeline.add(upHandlerFirst);
+			channelPipeline.add(upHandlerSecond);
+			channelPipeline.add(downHandlerFirst);
+			// 创建 Connect 事件
+			ChannelEvent connectEvent = new ConnectEvent("connect to the world, hello!");
+			// 传递事件
+			channelPipeline.upstreamSendEvent(connectEvent);
+		}
+	}
+
+
+```
+测试结果：
+	
+```
+	连接事件被UpstreamChannelHandlerFirst处理了: 事件内容是: connect to the world, hello!
+	连接事件被UpstreamChannelHandlerSecond处理了: 事件内容是: connect to the world, hello!
+```	
     
     
     
