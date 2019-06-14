@@ -2,9 +2,9 @@
 	
 	1、目标读者
 	2、前言
-	3、```ChannelPipeline```
-	4、事件传递模仿：```EventDelivery```
-	5、```EventDelivery``` 测试
+	3、ChannelPipeline
+	4、事件传递模仿：EventDelivery
+	5、EventDelivery测试
 	
 ### 1、目标读者
 简单使用过```netty```即可。
@@ -14,7 +14,6 @@
 [EventDelivery的github地址](https://github.com/null-007/netty-learning/tree/master/netty-3.7/src/test/java/org/jboss/netty/null007/EventDelivery)
 ### 3、```ChannelPipeline``` 事件传递源码分析
 ```ChannelPipeline```的整个设计思路是如下图所示。通过```ChannelPipeline```将```Channel```和一组 ```ChannelHandler``` 联系在一起：
-
 
     +----------------------------------------+---------------+
     *  |                  ChannelPipeline       |               |
@@ -51,16 +50,13 @@
     *  |  Netty Internal I/O Threads (Transport Implementation) |
     *  +--------------------------------------------------------+
 
- 
 ```ChannelPipeline```的继承关系如下：
-
 
            ChannelPipeline
                   |
         DefaultChannelPipeline   // 核心
                   |
         EmbeddedChannelPipeline  // AbstractCodecEmbedder 的 内部类，仅仅将 notifyHandlerException()方法重写了
-
 
 可以发现```ChannelPipeline```的核心实现类是```DefaultChannelPipeline```。观察该类的成员：
 
@@ -105,6 +101,7 @@
         private volatile Object attachment;
         ...
     }
+    
 判断一个```handler```是上行还下行的方法是依据handler实现的接口。观察其构造方法就能看出：
 
     DefaultChannelHandlerContext(
@@ -147,6 +144,7 @@
         ...
         sendUpstream(head, e);
     }
+    
 ```getActualUpstreamContext()```方法的目的找到上行链的起始节点。```ChannelPipeline```中物理链表只有一条，为了区分上行链和下行链，通过```handler```实现的接口将其组织成两条链：
 
     DefaultChannelHandlerContext(
@@ -274,7 +272,6 @@
 
 ### 5、```EventDelivery```测试
 	
-
 	public class PipelineTest {
 
 		public static void main(String[] args) {
@@ -295,11 +292,8 @@
 		}
 	}
 
-
-
 测试结果：
 	
-
 	连接事件被UpstreamChannelHandlerFirst处理了: 事件内容是: connect to the world, hello!
 	连接事件被UpstreamChannelHandlerSecond处理了: 事件内容是: connect to the world, hello!
 
