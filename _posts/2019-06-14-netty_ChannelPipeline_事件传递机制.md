@@ -268,8 +268,9 @@
 ### 4、事件传递模仿：```EventDelivery```
 为了加深映像，我们将上述框架中的关于事件传递的核心提取出来，自己模仿实现了该事件传递框架```EventDelivery```，完整的代码在
 [EventDelivery的github地址](https://github.com/null-007/netty-learning/tree/master/netty-3.7/src/test/java/org/jboss/netty/null007/EventDelivery)
+
 代码目录如下：
-![](https://null-007.github.io/img/2019_06_14/EventDelivery目录.png)
+![](https://null-007.github.io/img/2019_06_14/EventDelivery_code_overview.png)
 
 ### 5、```EventDelivery```测试
 	
