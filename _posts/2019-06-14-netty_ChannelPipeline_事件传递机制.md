@@ -52,11 +52,11 @@
 
 ```ChannelPipeline```的继承关系如下：
 
-           ChannelPipeline
-                  |
-        DefaultChannelPipeline   // 核心
-                  |
-        EmbeddedChannelPipeline  // AbstractCodecEmbedder 的 内部类，仅仅将 notifyHandlerException()方法重写了
+	   ChannelPipeline
+			  |
+	DefaultChannelPipeline   // 核心
+			  |
+	EmbeddedChannelPipeline  // AbstractCodecEmbedder 的 内部类，仅仅将 notifyHandlerException()方法重写了
 
 可以发现```ChannelPipeline```的核心实现类是```DefaultChannelPipeline```。观察该类的成员：
 
