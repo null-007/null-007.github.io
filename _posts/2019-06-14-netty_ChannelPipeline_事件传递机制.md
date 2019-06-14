@@ -15,7 +15,7 @@
 ### 3、```ChannelPipeline``` 事件传递源码分析
 ```ChannelPipeline```的整个设计思路是如下图所示。通过```ChannelPipeline```将```Channel```和一组 ```ChannelHandler``` 联系在一起：
 
-```
+
     +----------------------------------------+---------------+
     *  |                  ChannelPipeline       |               |
     *  |                                       \|/              |
@@ -50,15 +50,17 @@
     *  |                                                        |
     *  |  Netty Internal I/O Threads (Transport Implementation) |
     *  +--------------------------------------------------------+
- ```
+
  
 ```ChannelPipeline```的继承关系如下：
+
 
            ChannelPipeline
                   |
         DefaultChannelPipeline   // 核心
                   |
         EmbeddedChannelPipeline  // AbstractCodecEmbedder 的 内部类，仅仅将 notifyHandlerException()方法重写了
+
 
 可以发现```ChannelPipeline```的核心实现类是```DefaultChannelPipeline```。观察该类的成员：
 
@@ -272,7 +274,7 @@
 
 ### 5、```EventDelivery```测试
 	
-```
+
 	public class PipelineTest {
 
 		public static void main(String[] args) {
@@ -294,13 +296,13 @@
 	}
 
 
-```
+
 测试结果：
 	
-```
+
 	连接事件被UpstreamChannelHandlerFirst处理了: 事件内容是: connect to the world, hello!
 	连接事件被UpstreamChannelHandlerSecond处理了: 事件内容是: connect to the world, hello!
-```	
+
     
     
     
