@@ -1,5 +1,6 @@
 ```ChannelPipeline```的整个设计思路是如下图所示。通过```ChannelPipeline```将```Channel```和一组 ```ChannelHandler``` 联系在一起：
 
+```
     +----------------------------------------+---------------+
     *  |                  ChannelPipeline       |               |
     *  |                                       \|/              |
@@ -34,7 +35,8 @@
     *  |                                                        |
     *  |  Netty Internal I/O Threads (Transport Implementation) |
     *  +--------------------------------------------------------+
-    
+ ```
+ 
 ```ChannelPipeline```的继承关系如下：
 
            ChannelPipeline
