@@ -101,17 +101,17 @@
         private volatile Object attachment;
         ...
     }
-    
+	
 判断一个```handler```是上行还下行的方法是依据handler实现的接口。观察其构造方法就能看出：
 
     DefaultChannelHandlerContext(
-                DefaultChannelHandlerContext prev, DefaultChannelHandlerContext next,
-                String name, ChannelHandler handler) {
-            ...
-            canHandleUpstream = handler instanceof ChannelUpstreamHandler;
-            canHandleDownstream = handler instanceof ChannelDownstreamHandler;
-            ...
-        }
+			DefaultChannelHandlerContext prev, DefaultChannelHandlerContext next,
+			String name, ChannelHandler handler) {
+		...
+		canHandleUpstream = handler instanceof ChannelUpstreamHandler;
+		canHandleDownstream = handler instanceof ChannelDownstreamHandler;
+		...
+    }
 		
 除此外，该类只有下面两个方法有分析的必要了：
     
@@ -144,19 +144,20 @@
         ...
         sendUpstream(head, e);
     }
-    
+
 ```getActualUpstreamContext()```方法的目的找到上行链的起始节点。```ChannelPipeline```中物理链表只有一条，为了区分上行链和下行链，通过```handler```实现的接口将其组织成两条链：
 
     DefaultChannelHandlerContext(
-                DefaultChannelHandlerContext prev, DefaultChannelHandlerContext next,
-                String name, ChannelHandler handler) {
-            ...
-            canHandleUpstream = handler instanceof ChannelUpstreamHandler;
-            canHandleDownstream = handler instanceof ChannelDownstreamHandler;
-            ...
-        }
-		
+			DefaultChannelHandlerContext prev, DefaultChannelHandlerContext next,
+			String name, ChannelHandler handler) {
+		...
+		canHandleUpstream = handler instanceof ChannelUpstreamHandler;
+		canHandleDownstream = handler instanceof ChannelDownstreamHandler;
+		...
+    }
+	
 所以需要找到上行链真正的```head```。
+
 ```sendUpstream(head, e)```方法即方法(2)，表示的是以当前节点为起始节点传递事件：
 
     void sendUpstream(DefaultChannelHandlerContext ctx, ChannelEvent e) {
@@ -168,7 +169,7 @@
         }
     }
 
-    
+
 ```handler.handlerUpstream```其目的主要有两个：一是根据事件类型将事件分发（调用）给相应的方法；二是根据需要将事件传递给下一个```handler```。我们找了一个```SimpleChannelUpstreamHandler#handleUpstream```来分析一下，发现下面这一堆代码就是为了上述的两个目的：
 
     public void handleUpstream(
